@@ -1,0 +1,217 @@
+# Django для тех, кто знает FastAPI
+
+Раз вы уже знаете FastAPI, будет проще — я буду объяснять через аналогии. Django и FastAPI решают одни и те же задачи, но по-разному.
+
+---
+
+## 1. Большая картина: MVT vs FastAPI
+
+**FastAPI** — минималистичный: вы сами собираете приложение из кусочков (роуты, схемы, БД).
+**Django** — «batteries included»: всё уже есть (ORM, админка, аутентификация, формы, шаблоны, сессии).
+
+Архитектура Django называется **MVT** (Model-View-Template), но не путайтесь с MVC — это почти одно и то же, просто другие названия:
+
+| Концепция | Django (MVT) | FastAPI |
+|---|---|---|
+| Данные | **Model** (ORM) | SQLAlchemy / Pydantic |
+| Логика | **View** (функция/класс) | Эндпоинт (`@app.get`) |
+| Отрисовка | **Template** (HTML) | JSON-ответ или Jinja2 |
+| Маршруты | `urls.py` | `@app.get("/path")` |
+| Валидация | `forms.py` / `serializers` | Pydantic-модели |
+| Настройки | `settings.py` | `Config` / `.env` |
+
+---
+
+## 2. Структура проекта
+
+После `django-admin startproject myproject .` и `python manage.py startapp myapp` получится:
+
+```
+myproject/                 # ← корень проекта
+├── manage.py              # CLI-утилита (как `uvicorn` в FastAPI)
+├── requirements.txt
+├── myproject/             # ← настройки проекта (как `main.py` + конфиги)
+│   ├── __init__.py
+│   ├── settings.py        # ВСЕ настройки: БД, приложения, middleware, статики
+│   ├── urls.py            # Главный роутер (собирает роуты всех приложений)
+│   ├── asgi.py            # ASGI-сервер (аналог uvicorn)
+│   └── wsgi.py            # WSGI-сервер (для старых серверов типа gunicorn)
+└── myapp/                 # ← ваше приложение (логический модуль)
+    ├── __init__.py
+    ├── admin.py           # Регистрация моделей в админке
+    ├── apps.py            # Метаданные приложения
+    ├── models.py          # Модели данных (таблицы БД)
+    ├── views.py           # Логика (обработчики запросов)
+    ├── urls.py            # Роуты приложения (создаётся вручную)
+    ├── forms.py           # Формы (создаётся вручную)
+    ├── tests.py           # Тесты
+    ├── migrations/        # Миграции БД
+    ├── templates/myapp/   # HTML-шаблоны
+    └── static/myapp/      # CSS, JS, картинки
+```
+
+**Важно:** проект — это «контейнер», приложения — модули внутри. В одном проекте может быть много приложений (например, `blog`, `users`, `shop`).
+
+---
+
+## 3. Основные команды
+
+### `django-admin` — глобальная утилита (для создания проекта)
+```bash
+django-admin startproject name .      # создать проект в текущей папке
+django-admin startapp name            # создать приложение
+```
+
+### `python manage.py` — локальная утилита (всё остальное)
+```bash
+python manage.py runserver            # запустить dev-сервер (как uvicorn)
+python manage.py startapp name        # создать приложение
+python manage.py makemigrations       # создать миграции по изменениям в models.py
+python manage.py migrate              # применить миграции к БД
+python manage.py createsuperuser      # создать админа
+python manage.py shell                # интерактивная оболочка (можно импортировать модели)
+python manage.py test                 # запустить тесты
+python manage.py check                # проверить проект на ошибки
+```
+
+---
+
+## 4. Жизненный цикл запроса
+
+Когда браузер делает запрос, происходит следующее:
+
+```
+Браузер → Django → settings.py (MIDDLEWARE) → urls.py → views.py → (models.py + templates/) → Response → Браузер
+```
+
+Разберём по шагам:
+
+1. **Request** приходит в Django.
+2. **Middleware** (в `settings.py`) обрабатывает его: CSRF, сессии, аутентификация и т.д. *(аналог `middleware` в FastAPI)*
+3. **URL-роутер** (`urls.py`) находит подходящее представление.
+4. **View** (`views.py`) — функция или класс, который:
+   - читает данные из **моделей** (БД) или из памяти,
+   - обрабатывает формы,
+   - передаёт контекст в **шаблон**.
+5. **Template** (HTML) рендерится с данными и возвращается как **Response**.
+
+---
+
+## 5. Ключевые концепции
+
+### Models (модели) — описание БД
+```python
+# models.py
+from django.db import models
+
+class Note(models.Model):
+    title = models.CharField(max_length=100)
+    text = models.TextField()
+    created_at = models.DateTimeField(auto_now_add=True)
+```
+Это **аналог SQLAlchemy-моделей**, но мощнее: после `makemigrations` + `migrate` таблица сама создастся.
+
+### Views (представления) — обработчики
+```python
+# views.py
+from django.shortcuts import render
+from .models import Note
+
+def note_list(request):
+    notes = Note.objects.all()                # ORM-запрос
+    return render(request, "notes/list.html", {"notes": notes})
+```
+`request` — аналог `Request` в FastAPI. `render` — рендерит шаблон.
+
+### Templates (шаблоны) — HTML с логикой
+```html
+<!-- templates/notes/list.html -->
+{% extends "base.html" %}
+{% block content %}
+  {% for note in notes %}
+    <h2>{{ note.title }}</h2>
+  {% endfor %}
+{% endblock %}
+```
+Это **аналог Jinja2** (он и есть его предок). Синтаксис почти идентичен.
+
+### URLs (маршруты)
+```python
+# urls.py
+from django.urls import path
+from . import views
+
+urlpatterns = [
+    path("notes/", views.note_list, name="notes"),
+    path("notes/<int:id>/", views.note_detail, name="note_detail"),
+]
+```
+Аналог `@app.get("/notes/{id}")` в FastAPI, но параметры пишутся как `<int:id>`.
+
+### Forms (формы) — валидация данных
+```python
+# forms.py
+from django import forms
+
+class NoteForm(forms.Form):
+    title = forms.CharField(max_length=100)
+    text = forms.CharField(widget=forms.Textarea)
+```
+Аналог Pydantic-моделей, но с привязкой к HTML-формам.
+
+---
+
+## 6. Сравнение: FastAPI vs Django
+
+| Задача | FastAPI | Django |
+|---|---|---|
+| Создать эндпоинт | `@app.get("/")` | `path("", views.index)` в `urls.py` |
+| Получить параметр | `def f(id: int)` | `path("<int:id>/", ...)` |
+| Валидация | Pydantic | `forms.py` / DRF serializers |
+| БД | SQLAlchemy + Alembic | ORM + `migrate` |
+| Шаблоны | Jinja2 (опционально) | Встроенный шаблонизатор |
+| Админка | Нет (нужно собирать) | Встроена (`/admin/`) |
+| Аутентификация | Своя / `fastapi-users` | Встроена (`django.contrib.auth`) |
+| Асинхронность | Да, из коробки | Частично (с Django 3.1+) |
+| Скорость старта | Быстро | Медленнее, но всё есть |
+
+---
+
+## 7. Что важно понимать новичку
+
+1. **Django синхронный по умолчанию.** Асинхронные view возможны (`async def`), но ORM и многие части — синхронные.
+2. **Всё — приложение.** Django-проект состоит из приложений. Старайтесь делать их независимыми.
+3. **Магия в `settings.py`.** Там регистрируются приложения, middleware, шаблоны, БД. Если что-то не работает — смотрите туда.
+4. **`request` — центральный объект.** В нём всё: GET/POST-данные, cookies, пользователь, сессия.
+5. **Шаблоны рендерятся на сервере.** В отличие от FastAPI, где чаще отдают JSON, Django часто отдаёт готовый HTML.
+6. **ORM мощный.** `Note.objects.filter(tag="работа").order_by("-created_at")` — и это только начало.
+
+---
+
+## 8. Минимальный чек-лист, чтобы «пощупать»
+
+1. `django-admin startproject testproj .`
+2. `python manage.py startapp demo`
+3. Добавить `'demo'` в `INSTALLED_APPS` в `settings.py`
+4. В `demo/views.py` написать:
+   ```python
+   from django.http import HttpResponse
+   def hello(request):
+       return HttpResponse("Hello, Django!")
+   ```
+5. В `demo/urls.py`:
+   ```python
+   from django.urls import path
+   from . import views
+   urlpatterns = [path("", views.hello)]
+   ```
+6. В `testproj/urls.py`:
+   ```python
+   from django.urls import path, include
+   urlpatterns = [path("", include("demo.urls"))]
+   ```
+7. `python manage.py runserver` → открыть `http://127.0.0.1:8000/`
+
+Если этот путь работает — вы поняли базу. Дальше добавляйте модели, шаблоны, формы по аналогии с тем, что мы делали в варианте 4.
+
+Если хотите — могу подробнее раскрыть любую часть: ORM, шаблоны, формы, админку или middleware.
