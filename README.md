@@ -11,7 +11,7 @@
 mkdir notes_app
 cd notes_app
 
-git clone git@github.com:RocetDev/Django_notes_site.git
+git clone https://github.com/RocetDev/Django_notes_app.git
 cd Django_notes_site
 
 # Если у вас просто Python
