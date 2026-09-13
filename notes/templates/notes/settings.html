@@ -1,0 +1,28 @@
+{% extends "notes/base.html" %}
+{% block content %}
+<h2>Настройки внешнего вида</h2>
+<form method="post">
+    {% csrf_token %}
+    <p>
+        <label>Тема:</label><br>
+        {% for key, value in themes.items %}
+            <label>
+                <input type="radio" name="theme" value="{{ key }}"
+                    {% if key == current_theme %}checked{% endif %}>
+                {{ value.name }}
+            </label><br>
+        {% endfor %}
+    </p>
+    <p>
+        <label>Размер шрифта:</label><br>
+        {% for f in fonts %}
+            <label>
+                <input type="radio" name="font_size" value="{{ f }}"
+                    {% if f == current_font %}checked{% endif %}>
+                {{ f }}px
+            </label>
+        {% endfor %}
+    </p>
+    <button type="submit">Сохранить</button>
+</form>
+{% endblock %}
