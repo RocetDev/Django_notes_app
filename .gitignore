@@ -1,217 +1,220 @@
-# Django для тех, кто знает FastAPI
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[codz]
+*$py.class
 
-Раз вы уже знаете FastAPI, будет проще — я буду объяснять через аналогии. Django и FastAPI решают одни и те же задачи, но по-разному.
+# C extensions
+*.so
 
----
+# Distribution / packaging
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+share/python-wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
 
-## 1. Большая картина: MVT vs FastAPI
+# PyInstaller
+#   Usually these files are written by a python script from a template
+#   before PyInstaller builds the exe, so as to inject date/other infos into it.
+*.manifest
+*.spec
 
-**FastAPI** — минималистичный: вы сами собираете приложение из кусочков (роуты, схемы, БД).
-**Django** — «batteries included»: всё уже есть (ORM, админка, аутентификация, формы, шаблоны, сессии).
+# Installer logs
+pip-log.txt
+pip-delete-this-directory.txt
 
-Архитектура Django называется **MVT** (Model-View-Template), но не путайтесь с MVC — это почти одно и то же, просто другие названия:
+# Unit test / coverage reports
+htmlcov/
+.tox/
+.nox/
+.coverage
+.coverage.*
+.cache
+nosetests.xml
+coverage.xml
+*.cover
+*.py.cover
+*.lcov
+.hypothesis/
+.pytest_cache/
+cover/
 
-| Концепция | Django (MVT) | FastAPI |
-|---|---|---|
-| Данные | **Model** (ORM) | SQLAlchemy / Pydantic |
-| Логика | **View** (функция/класс) | Эндпоинт (`@app.get`) |
-| Отрисовка | **Template** (HTML) | JSON-ответ или Jinja2 |
-| Маршруты | `urls.py` | `@app.get("/path")` |
-| Валидация | `forms.py` / `serializers` | Pydantic-модели |
-| Настройки | `settings.py` | `Config` / `.env` |
+# Translations
+*.mo
+*.pot
 
----
+# Django stuff:
+*.log
+local_settings.py
+db.sqlite3
+db.sqlite3-journal
 
-## 2. Структура проекта
+# Flask stuff:
+instance/
+.webassets-cache
 
-После `django-admin startproject myproject .` и `python manage.py startapp myapp` получится:
+# Scrapy stuff:
+.scrapy
 
-```
-myproject/                 # ← корень проекта
-├── manage.py              # CLI-утилита (как `uvicorn` в FastAPI)
-├── requirements.txt
-├── myproject/             # ← настройки проекта (как `main.py` + конфиги)
-│   ├── __init__.py
-│   ├── settings.py        # ВСЕ настройки: БД, приложения, middleware, статики
-│   ├── urls.py            # Главный роутер (собирает роуты всех приложений)
-│   ├── asgi.py            # ASGI-сервер (аналог uvicorn)
-│   └── wsgi.py            # WSGI-сервер (для старых серверов типа gunicorn)
-└── myapp/                 # ← ваше приложение (логический модуль)
-    ├── __init__.py
-    ├── admin.py           # Регистрация моделей в админке
-    ├── apps.py            # Метаданные приложения
-    ├── models.py          # Модели данных (таблицы БД)
-    ├── views.py           # Логика (обработчики запросов)
-    ├── urls.py            # Роуты приложения (создаётся вручную)
-    ├── forms.py           # Формы (создаётся вручную)
-    ├── tests.py           # Тесты
-    ├── migrations/        # Миграции БД
-    ├── templates/myapp/   # HTML-шаблоны
-    └── static/myapp/      # CSS, JS, картинки
-```
+# Sphinx documentation
+docs/_build/
 
-**Важно:** проект — это «контейнер», приложения — модули внутри. В одном проекте может быть много приложений (например, `blog`, `users`, `shop`).
+# PyBuilder
+.pybuilder/
+target/
 
----
+# Jupyter Notebook
+.ipynb_checkpoints
 
-## 3. Основные команды
+# IPython
+profile_default/
+ipython_config.py
 
-### `django-admin` — глобальная утилита (для создания проекта)
-```bash
-django-admin startproject name .      # создать проект в текущей папке
-django-admin startapp name            # создать приложение
-```
+# pyenv
+#   For a library or package, you might want to ignore these files since the code is
+#   intended to run in multiple environments; otherwise, check them in:
+# .python-version
 
-### `python manage.py` — локальная утилита (всё остальное)
-```bash
-python manage.py runserver            # запустить dev-сервер (как uvicorn)
-python manage.py startapp name        # создать приложение
-python manage.py makemigrations       # создать миграции по изменениям в models.py
-python manage.py migrate              # применить миграции к БД
-python manage.py createsuperuser      # создать админа
-python manage.py shell                # интерактивная оболочка (можно импортировать модели)
-python manage.py test                 # запустить тесты
-python manage.py check                # проверить проект на ошибки
-```
+# pipenv
+#   According to pypa/pipenv#598, it is recommended to include Pipfile.lock in version control.
+#   However, in case of collaboration, if having platform-specific dependencies or dependencies
+#   having no cross-platform support, pipenv may install dependencies that don't work, or not
+#   install all needed dependencies.
+# Pipfile.lock
 
----
+# UV
+#   Similar to Pipfile.lock, it is generally recommended to include uv.lock in version control.
+#   This is especially recommended for binary packages to ensure reproducibility, and is more
+#   commonly ignored for libraries.
+# uv.lock
 
-## 4. Жизненный цикл запроса
+# poetry
+#   Similar to Pipfile.lock, it is generally recommended to include poetry.lock in version control.
+#   This is especially recommended for binary packages to ensure reproducibility, and is more
+#   commonly ignored for libraries.
+#   https://python-poetry.org/docs/basic-usage/#commit-your-poetrylock-file-to-version-control
+# poetry.lock
+# poetry.toml
 
-Когда браузер делает запрос, происходит следующее:
+# pdm
+#   Similar to Pipfile.lock, it is generally recommended to include pdm.lock in version control.
+#   pdm recommends including project-wide configuration in pdm.toml, but excluding .pdm-python.
+#   https://pdm-project.org/en/latest/usage/project/#working-with-version-control
+# pdm.lock
+# pdm.toml
+.pdm-python
+.pdm-build/
 
-```
-Браузер → Django → settings.py (MIDDLEWARE) → urls.py → views.py → (models.py + templates/) → Response → Браузер
-```
+# pixi
+#   Similar to Pipfile.lock, it is generally recommended to include pixi.lock in version control.
+# pixi.lock
+#   Pixi creates a virtual environment in the .pixi directory, just like venv module creates one
+#   in the .venv directory. It is recommended not to include this directory in version control.
+.pixi/*
+!.pixi/config.toml
 
-Разберём по шагам:
+# PEP 582; used by e.g. github.com/David-OConnor/pyflow and github.com/pdm-project/pdm
+__pypackages__/
 
-1. **Request** приходит в Django.
-2. **Middleware** (в `settings.py`) обрабатывает его: CSRF, сессии, аутентификация и т.д. *(аналог `middleware` в FastAPI)*
-3. **URL-роутер** (`urls.py`) находит подходящее представление.
-4. **View** (`views.py`) — функция или класс, который:
-   - читает данные из **моделей** (БД) или из памяти,
-   - обрабатывает формы,
-   - передаёт контекст в **шаблон**.
-5. **Template** (HTML) рендерится с данными и возвращается как **Response**.
+# Celery stuff
+celerybeat-schedule*
+celerybeat.pid
 
----
+# Redis
+*.rdb
+*.aof
+*.pid
 
-## 5. Ключевые концепции
+# RabbitMQ
+mnesia/
+rabbitmq/
+rabbitmq-data/
 
-### Models (модели) — описание БД
-```python
-# models.py
-from django.db import models
+# ActiveMQ
+activemq-data/
 
-class Note(models.Model):
-    title = models.CharField(max_length=100)
-    text = models.TextField()
-    created_at = models.DateTimeField(auto_now_add=True)
-```
-Это **аналог SQLAlchemy-моделей**, но мощнее: после `makemigrations` + `migrate` таблица сама создастся.
+# SageMath parsed files
+*.sage.py
 
-### Views (представления) — обработчики
-```python
-# views.py
-from django.shortcuts import render
-from .models import Note
+# Environments
+.env
+.envrc
+.venv
+env/
+venv/
+ENV/
+env.bak/
+venv.bak/
 
-def note_list(request):
-    notes = Note.objects.all()                # ORM-запрос
-    return render(request, "notes/list.html", {"notes": notes})
-```
-`request` — аналог `Request` в FastAPI. `render` — рендерит шаблон.
+# Spyder project settings
+.spyderproject
+.spyproject
 
-### Templates (шаблоны) — HTML с логикой
-```html
-<!-- templates/notes/list.html -->
-{% extends "base.html" %}
-{% block content %}
-  {% for note in notes %}
-    <h2>{{ note.title }}</h2>
-  {% endfor %}
-{% endblock %}
-```
-Это **аналог Jinja2** (он и есть его предок). Синтаксис почти идентичен.
+# Rope project settings
+.ropeproject
 
-### URLs (маршруты)
-```python
-# urls.py
-from django.urls import path
-from . import views
+# mkdocs documentation
+/site
 
-urlpatterns = [
-    path("notes/", views.note_list, name="notes"),
-    path("notes/<int:id>/", views.note_detail, name="note_detail"),
-]
-```
-Аналог `@app.get("/notes/{id}")` в FastAPI, но параметры пишутся как `<int:id>`.
+# mypy
+.mypy_cache/
+.dmypy.json
+dmypy.json
 
-### Forms (формы) — валидация данных
-```python
-# forms.py
-from django import forms
+# Pyre type checker
+.pyre/
 
-class NoteForm(forms.Form):
-    title = forms.CharField(max_length=100)
-    text = forms.CharField(widget=forms.Textarea)
-```
-Аналог Pydantic-моделей, но с привязкой к HTML-формам.
+# pytype static type analyzer
+.pytype/
 
----
+# Cython debug symbols
+cython_debug/
 
-## 6. Сравнение: FastAPI vs Django
+# PyCharm
+#   JetBrains specific template is maintained in a separate JetBrains.gitignore that can
+#   be found at https://github.com/github/gitignore/blob/main/Global/JetBrains.gitignore
+#   and can be added to the global gitignore or merged into this file.  For a more nuclear
+#   option (not recommended) you can uncomment the following to ignore the entire idea folder.
+# .idea/
 
-| Задача | FastAPI | Django |
-|---|---|---|
-| Создать эндпоинт | `@app.get("/")` | `path("", views.index)` в `urls.py` |
-| Получить параметр | `def f(id: int)` | `path("<int:id>/", ...)` |
-| Валидация | Pydantic | `forms.py` / DRF serializers |
-| БД | SQLAlchemy + Alembic | ORM + `migrate` |
-| Шаблоны | Jinja2 (опционально) | Встроенный шаблонизатор |
-| Админка | Нет (нужно собирать) | Встроена (`/admin/`) |
-| Аутентификация | Своя / `fastapi-users` | Встроена (`django.contrib.auth`) |
-| Асинхронность | Да, из коробки | Частично (с Django 3.1+) |
-| Скорость старта | Быстро | Медленнее, но всё есть |
+# Abstra
+#   Abstra is an AI-powered process automation framework.
+#   Ignore directories containing user credentials, local state, and settings.
+#   Learn more at https://abstra.io/docs
+.abstra/
 
----
+# Visual Studio Code
+#   Visual Studio Code specific template is maintained in a separate VisualStudioCode.gitignore that
+#   can be found at https://github.com/github/gitignore/blob/main/Global/VisualStudioCode.gitignore
+#   and can be added to the global gitignore or merged into this file. However, if you prefer, you
+#   could uncomment the following to ignore the entire vscode folder
+# .vscode/
+# Temporary file for partial code execution
+tempCodeRunnerFile.py
 
-## 7. Что важно понимать новичку
+# Ruff stuff:
+.ruff_cache/
 
-1. **Django синхронный по умолчанию.** Асинхронные view возможны (`async def`), но ORM и многие части — синхронные.
-2. **Всё — приложение.** Django-проект состоит из приложений. Старайтесь делать их независимыми.
-3. **Магия в `settings.py`.** Там регистрируются приложения, middleware, шаблоны, БД. Если что-то не работает — смотрите туда.
-4. **`request` — центральный объект.** В нём всё: GET/POST-данные, cookies, пользователь, сессия.
-5. **Шаблоны рендерятся на сервере.** В отличие от FastAPI, где чаще отдают JSON, Django часто отдаёт готовый HTML.
-6. **ORM мощный.** `Note.objects.filter(tag="работа").order_by("-created_at")` — и это только начало.
+# PyPI configuration file
+.pypirc
 
----
+# Marimo
+marimo/_static/
+marimo/_lsp/
+__marimo__/
 
-## 8. Минимальный чек-лист, чтобы «пощупать»
-
-1. `django-admin startproject testproj .`
-2. `python manage.py startapp demo`
-3. Добавить `'demo'` в `INSTALLED_APPS` в `settings.py`
-4. В `demo/views.py` написать:
-   ```python
-   from django.http import HttpResponse
-   def hello(request):
-       return HttpResponse("Hello, Django!")
-   ```
-5. В `demo/urls.py`:
-   ```python
-   from django.urls import path
-   from . import views
-   urlpatterns = [path("", views.hello)]
-   ```
-6. В `testproj/urls.py`:
-   ```python
-   from django.urls import path, include
-   urlpatterns = [path("", include("demo.urls"))]
-   ```
-7. `python manage.py runserver` → открыть `http://127.0.0.1:8000/`
-
-Если этот путь работает — вы поняли базу. Дальше добавляйте модели, шаблоны, формы по аналогии с тем, что мы делали в варианте 4.
-
-Если хотите — могу подробнее раскрыть любую часть: ORM, шаблоны, формы, админку или middleware.
+# Streamlit
+.streamlit/secrets.toml
