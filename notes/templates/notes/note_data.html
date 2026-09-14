@@ -5,12 +5,6 @@
 <p>{{ note.text }}</p>
 <div style="margin-top: 20px;">
     <a href="{% url 'index' %}" style="padding: 10px 20px; background: #757575; color: white; text-decoration: none; border-radius: 4px; margin-right: 10px;">← Назад</a>
-    <form method="post" action="{% url 'delete_note' note.id %}" style="display: inline;">
-        {% csrf_token %}
-        <button type="submit" style="background: #f44336; padding: 10px 20px; color: white; border: none; border-radius: 4px; cursor: pointer;" 
-                onclick="return confirm('Удалить заметку?')">
-            Удалить заметку
-        </button>
-    </form>
+    <a href="{% url 'delete_note' note.id %}" style="padding: 10px 20px; background: #f44336; color: white; text-decoration: none; border-radius: 4px; display: inline-block;">Удалить заметку</a>
 </div>
 {% endblock %}

@@ -9,11 +9,7 @@
     <li style="margin-bottom: 8px;">
         <a href="{% url 'note_detail' note.id %}" style="text-decoration: none;">{{ note.title }}</a>
         <span style="margin-left: 8px; opacity: 0.6; font-size: 0.85em;">({{ note.tag }})</span>
-        <form method="post" action="{% url 'delete_note' note.id %}" style="display: inline; margin-left: 8px;">
-            {% csrf_token %}
-            <button type="submit" class="delete-btn" title="Удалить"
-                    onclick="return confirm('Удалить заметку?')">×</button>
-        </form>
+        <a href="{% url 'delete_note' note.id %}" class="delete-btn" title="Удалить">×</a>
     </li>
 {% empty %}
     <li>Заметок пока нет.</li>
